@@ -64,16 +64,12 @@
     </div>
 
     <script>
-
-      // ngambil data dari API (read) 
       function renderTable() {
         fetch('http://localhost:8000/api/user')
           .then(response => response.json())
           .then(data => {
-
-            // buat variable yang isi nya tuh dari id table body di html
             let catatanHadiahTable = document.getElementById('catatanHadiahTable');
-            let element = ''; // pokok nya ini nilai default dari element atau table nya
+            let element = '';
 
             if (data.data.length === 0) {
               element = `
@@ -83,8 +79,7 @@
               `;
             }
 
-            // looping biar semua data di tampilin nya satu persatu
-            data.data.map((item, key) => {
+            data.data.forEach((item, key) => {
               element += `
                 <tr>
                   <td>${key + 1}</td>
@@ -92,45 +87,7 @@
                   <td>${item.nama_pemberi}</td>
                   <td>${item.tanggal_terima}</td>
                   <td>
-
-                  <!-- Button edit -->
-                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal${item.id}">
-                      Edit
-                    </button>
-
-                   <!-- Modal Edit -->
-                    <div class="modal fade" id="editModal${item.id}" tabindex="-1" aria-labelledby="editLabel${item.id}" aria-hidden="true">
-                      <div class="modal-dialog">
-                        <div class="modal-content">
-                          <form id="editForm${item.id}" onsubmit="updateUser(event, ${item.id})">
-                            <div class="modal-header">
-                              <h1 class="modal-title fs-5" id="editLabel${item.id}">Update Catatan</h1>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                              <div class="mb-3">
-                                <label class="form-label">Nama Hadiah</label>
-                                <input type="text" class="form-control" name="nama_hadiah" value="${item.nama_hadiah}" required>
-                              </div>
-                              <div class="mb-3">
-                                <label class="form-label">Nama Pemberi</label>
-                                <input type="text" class="form-control" name="nama_pemberi" value="${item.nama_pemberi}" required>
-                              </div>
-                              <div class="mb-3">
-                                <label class="form-label">Tanggal Pemberi</label>
-                                <input type="date" class="form-control" name="tanggal_terima" value="${item.tanggal_terima}" required>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                              <button type="submit" class="btn btn-primary">Update</button>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Button Hapus -->
+                    <!-- Tombol Hapus -->
                     <button type="button" class="btn btn-danger btn-sm" 
                             data-bs-toggle="modal" data-bs-target="#deleteModal${item.id}">
                       Delete
@@ -163,7 +120,6 @@
               `;
             });
 
-            // habis di looping, karna catatanHadiahTable uda ada id nya, masukin ke variable element dalam tbody
             catatanHadiahTable.innerHTML = element;
           })
           .catch(error => {
@@ -171,31 +127,25 @@
           });
       }
 
-      // munculin tuh data dulu awal awal
       renderTable();
 
       function deleteUser(id) {
         fetch(`http://localhost:8000/api/user/destroy.php?id=${id}`, {
           method: 'DELETE',
         })
-
-        // string json di ubah jadi object js biar bisa di pake
         .then(response => response.json())
-
-        // inpo tambahan di console sama nge refresh table nya
         .then(result => {
           console.log('User deleted:', result);
           renderTable(); 
         })
-
-        // ini penanganan else nya kalo ada error
         .catch(error => console.error('Error deleting user:', error));
       }
 
-      function addUser(event) {
-        let form = event.target;
-        let formData = new FormData(form);
-        let data = Object.fromEntries(formData);
+      // Tambah Data
+      document.getElementById('addForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        let formData = new FormData(this);
+        let data = Object.fromEntries(formData.entries());
 
         fetch('http://localhost:8000/api/user/store.php', {
           method: 'POST',
@@ -206,42 +156,11 @@
         .then(result => {
           console.log('User added:', result);
           renderTable();
-          bootstrap.Modal(document.getElementById('addModal')).hide();
+          this.reset();
+          bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
         })
         .catch(error => console.error('Error adding user:', error));
-      }
-
-      document.getElementById('addForm').addEventListener('submit', addUser);
-
-
-      function updateUser(event, id) {
-
-        // ngambil data sesuai id nya
-        let form = document.getElementById(`editForm${id}`);
-
-        // ngambil semua data kayak nama hadiah, nama pemberi, sama tanggal terima nya
-         
-        let formData = new FormData(form);
-
-        // ngubah form jadi object js, kalau engga pake json_decode gausa pake ini, jadi pake yang atas aja
-        let data = Object.fromEntries(formData.entries());
-
-        // ambil
-        fetch(`http://localhost:8000/api/user/update.php?id=${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' }, // kirim dalam format json
-          body: JSON.stringify(data) // object js -> string json
-        })
-
-        .then(response => response.json())
-        .then(result => {
-          console.log('User updated:', result);
-          renderTable();
-          bootstrap.Modal(document.getElementById(`editModal${id}`)).hide();
-        })
-        .catch(error => console.error('Error updating user:', error));
-      }
-      
+      });
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
